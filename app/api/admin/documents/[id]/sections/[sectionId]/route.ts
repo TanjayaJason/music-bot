@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth/admin";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+export async function PATCH(request:Request,context:{params:Promise<{id:string;sectionId:string}>}){try{await requireAdmin();const {id,sectionId}=await context.params;const body=await request.json();if(typeof body.extractedText!=="string"||body.extractedText.length>100000)return NextResponse.json({error:"Isi tidak valid."},{status:400});const {error}=await createSupabaseAdminClient().from("document_sections").update({extracted_text:body.extractedText,review_status:body.reviewStatus==="approved"?"approved":"needs_review"}).eq("id",sectionId).eq("document_id",id);if(error)throw error;return NextResponse.json({ok:true})}catch{return NextResponse.json({error:"Bagian gagal disimpan."},{status:500})}}

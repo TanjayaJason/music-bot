@@ -1,0 +1,2 @@
+import { UploadForm } from "@/components/upload-form";
+export default function UploadPage(){return <div className="mx-auto max-w-3xl"><p className="text-xs font-bold uppercase tracking-[.2em] text-[#92713a]">Ingesti dokumen</p><h1 className="serif mt-2 text-4xl font-semibold">Unggah PDF</h1><p className="mt-3 text-sm leading-6 text-[#756f65]">PDF disimpan secara privat, lalu diproses. Dokumen tidak langsung diterbitkan.</p><UploadForm/></div>}

@@ -1,0 +1,3 @@
+import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+export async function GET(_request:Request,context:{params:Promise<{id:string}>}){const {id}=await context.params;const supabase=createSupabaseAdminClient();const {data:doc}=await supabase.from("documents").select("storage_path").eq("id",id).eq("publication_status","published").eq("extraction_status","completed").single();if(!doc)return NextResponse.json({error:"Dokumen tidak tersedia."},{status:404});const {data,error}=await supabase.storage.from("documents").createSignedUrl(doc.storage_path,300);if(error)return NextResponse.json({error:"Pratinjau gagal."},{status:500});return NextResponse.redirect(data.signedUrl,302)}

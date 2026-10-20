@@ -1,0 +1,3 @@
+import { describe,expect,it } from "vitest";
+import { normalizeTable } from "@/lib/pdf/table-normalizer";
+describe("normalisasi tabel",()=>{it("mempertahankan hubungan sel kosong dengan baris sebelumnya",()=>{const result=normalizeTable([["Tanggal","Perayaan","Pembuka"],["8 Nov 2026","Minggu Biasa","Lagu A"],["","","Lagu B"]]);expect(result.rows[1]).toEqual({Tanggal:"8 Nov 2026",Perayaan:"Minggu Biasa",Pembuka:"Lagu B"});expect(result.ambiguous).toBe(false)});it("menandai tabel tanpa struktur",()=>{expect(normalizeTable([[""],[""]]).ambiguous).toBe(true)});it("tidak mengarang isi sel pertama",()=>{const result=normalizeTable([["Tanggal","Lagu"],["","Lagu A"]]);expect(result.rows[0].Tanggal).toBe("")})});
