@@ -2,6 +2,7 @@ import "server-only";
 
 import { createEmbedding } from "@/lib/ai/embeddings";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { fitSourcesToContextBudget } from "@/lib/rag/context-budget";
 import { normalizeQuery } from "@/lib/rag/normalize-query";
 import type { RetrievalResult } from "@/types/database";
 
@@ -17,9 +18,8 @@ export async function retrievePublishedContext(query: string): Promise<Retrieval
   });
   if (error) throw new Error(`Pencarian basis pengetahuan gagal: ${error.message}`);
 
-  return ((data ?? []) as Array<Record<string, unknown>>)
+  const rankedSources = ((data ?? []) as Array<Record<string, unknown>>)
     .filter((row) => Number(row.combined_score ?? 0) >= 0.12)
-    .slice(0, 6)
     .map((row) => ({
       documentId: String(row.document_id),
       documentTitle: String(row.document_title),
@@ -31,4 +31,6 @@ export async function retrievePublishedContext(query: string): Promise<Retrieval
       score: Number(row.combined_score),
       metadata: (row.metadata as Record<string, unknown>) ?? {},
     }));
+
+  return fitSourcesToContextBudget(rankedSources);
 }

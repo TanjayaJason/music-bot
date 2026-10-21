@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { generateGroundedAnswer } from "@/lib/ai/groq";
+import { openGroundedAnswerStream, UNKNOWN_ANSWER } from "@/lib/ai/groq";
 import { getEnv } from "@/lib/config";
 import { retrievePublishedContext } from "@/lib/rag/retrieve";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -10,9 +10,15 @@ import { chatSchema } from "@/lib/validation/schemas";
 export const maxDuration = 45;
 
 function toCitation(source: Awaited<ReturnType<typeof retrievePublishedContext>>[number]) {
-  return { documentId: source.documentId, documentTitle: source.documentTitle,
-    pageStart: source.pageStart, pageEnd: source.pageEnd, sectionTitle: source.sectionTitle,
-    excerpt: source.excerpt, score: source.score };
+  return {
+    documentId: source.documentId,
+    documentTitle: source.documentTitle,
+    pageStart: source.pageStart,
+    pageEnd: source.pageEnd,
+    sectionTitle: source.sectionTitle,
+    excerpt: source.excerpt,
+    score: source.score,
+  };
 }
 
 export async function POST(request: Request) {
@@ -21,6 +27,7 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
     }
+
     const requestHeaders = await headers();
     const clientIp = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const clientKey = createHash("sha256").update(clientIp).digest("hex");
@@ -39,32 +46,81 @@ export async function POST(request: Request) {
     }
 
     const sources = await retrievePublishedContext(parsed.data.message);
-    const answer = await generateGroundedAnswer(parsed.data.message, sources);
+    const answerStream = await openGroundedAnswerStream(parsed.data.message, sources);
+    const citations = sources.map(toCitation);
     let sessionId = parsed.data.sessionId;
+
     if (!sessionId) {
       const { data: session } = await supabase.from("chat_sessions").insert({}).select("id").single();
       sessionId = session?.id;
     }
-    let messageId: string | undefined;
     if (sessionId) {
-      await supabase.from("chat_messages").insert({ session_id: sessionId, role: "user", content: parsed.data.message });
-      const { data: saved } = await supabase
-        .from("chat_messages")
-        .insert({
-          session_id: sessionId,
-          role: "assistant",
-          content: answer,
-          citations: sources.map(toCitation),
-        })
-        .select("id")
-        .single();
-      messageId = saved?.id;
+      await supabase.from("chat_messages").insert({
+        session_id: sessionId,
+        role: "user",
+        content: parsed.data.message,
+      });
     }
-    return NextResponse.json({
-      answer,
-      sessionId,
-      messageId,
-      citations: sources.map(toCitation),
+
+    const encoder = new TextEncoder();
+    const send = (controller: ReadableStreamDefaultController<Uint8Array>, event: object) => {
+      controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+    };
+
+    let canceled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let answer = "";
+        try {
+          send(controller, { type: "meta", sessionId });
+          for await (const delta of answerStream) {
+            answer += delta;
+            send(controller, { type: "delta", content: delta });
+          }
+
+          if (!answer.trim()) {
+            answer = UNKNOWN_ANSWER;
+            send(controller, { type: "delta", content: answer });
+          }
+
+          let messageId: string | undefined;
+          if (sessionId) {
+            const { data: saved } = await supabase
+              .from("chat_messages")
+              .insert({
+                session_id: sessionId,
+                role: "assistant",
+                content: answer,
+                citations,
+              })
+              .select("id")
+              .single();
+            messageId = saved?.id;
+          }
+
+          if (!canceled) {
+            send(controller, { type: "done", messageId, citations });
+            controller.close();
+          }
+        } catch (error) {
+          if (canceled) return;
+          const message = error instanceof Error ? error.message : "Layanan chat tidak tersedia.";
+          send(controller, { type: "error", message });
+          controller.close();
+        }
+      },
+      async cancel() {
+        canceled = true;
+        await answerStream.return(undefined);
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Accel-Buffering": "no",
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Layanan chat tidak tersedia.";

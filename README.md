@@ -1,4 +1,6 @@
-# Musica Liturgia AI
+# CHORD
+
+**Catholic Hymn Options, Rules, & Directives**
 
 Asisten pengetahuan musik liturgi berbahasa Indonesia yang menjawab berdasarkan PDF yang diunggah, ditinjau, dan diterbitkan oleh administrator. Proyek ini memakai Next.js App Router, Supabase (Auth, PostgreSQL, Storage, pgvector), Gemini Embedding, dan Groq Chat Completions.
 

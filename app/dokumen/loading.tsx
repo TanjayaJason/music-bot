@@ -1,0 +1,4 @@
+import { Footer } from "@/components/footer";
+import { PublicNav } from "@/components/public-nav";
+
+export default function DocumentsLoading(){return <><PublicNav/><main id="main-content" className="shell min-h-[70vh] py-12 sm:py-20" aria-busy="true" aria-label="Memuat dokumen"><div className="skeleton h-7 w-40 rounded-full"/><div className="skeleton mt-5 h-12 w-full max-w-xl rounded-xl"/><div className="skeleton mt-4 h-5 w-full max-w-2xl rounded-lg"/><div className="skeleton mt-10 h-18 w-full rounded-2xl"/><div className="mt-5 grid gap-4 md:grid-cols-2">{Array.from({length:4},(_,index)=><div key={index} className="rounded-3xl border border-[#e5e7eb] bg-white p-6"><div className="skeleton size-11 rounded-2xl"/><div className="skeleton mt-5 h-7 w-4/5 rounded-lg"/><div className="skeleton mt-4 h-4 w-full rounded"/><div className="skeleton mt-2 h-4 w-2/3 rounded"/></div>)}</div></main><Footer/></>}
