@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, BookOpenText, CalendarDays, FileSearch, FileText, Search } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpenText, CalendarDays, FileSearch, FileText, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -25,7 +26,7 @@ export function DocumentLibrary({documents}:{documents:DocumentItem[]}) {
     return documents.filter((document)=>(category==="Semua"||document.category===category)&&(!normalized||`${document.title} ${document.description??""} ${document.category}`.toLocaleLowerCase("id").includes(normalized)));
   },[category,documents,query]);
 
-  if(documents.length===0)return <Card className="mt-12 flex flex-col items-center p-8 text-center sm:p-12"><span className="grid size-16 place-items-center rounded-3xl bg-[#f2ead9] text-[#84652f]"><BookOpenText className="size-7"/></span><h2 className="serif mt-5 text-2xl font-semibold">Belum ada dokumen terbit</h2><p className="mt-2 max-w-md text-sm leading-6 text-[#746e64]">Administrator perlu mengunggah, meninjau, dan menerbitkan dokumen sebelum dapat digunakan oleh asisten.</p></Card>;
+  if(documents.length===0)return <Card className="mt-10 flex flex-col items-center p-8 text-center sm:mt-12 sm:p-12"><span className="grid size-16 place-items-center rounded-3xl bg-[#fff1f2] text-[#b4232d]"><BookOpenText className="size-7"/></span><h2 className="serif mt-5 text-2xl font-semibold">Belum ada dokumen terbit</h2><p className="mt-2 max-w-md text-sm leading-6 text-[#475467]">Dokumen akan tampil di sini setelah ditinjau dan diterbitkan oleh administrator. CHORD memerlukan dokumen terbit untuk memberikan jawaban bersumber.</p><Link href="/" className="tap-target mt-6 inline-flex items-center gap-2 rounded-full border border-[#d0d5dd] bg-white px-5 text-sm font-semibold text-[#102a43] transition hover:bg-[#f2f4f7]">Kembali ke beranda <ArrowRight className="size-4"/></Link></Card>;
 
   return <div className="mt-10">
     <div className="flex flex-col gap-3 rounded-2xl border border-[#e5e7eb] bg-white p-3 shadow-sm sm:flex-row sm:items-center">

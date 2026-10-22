@@ -27,6 +27,7 @@ button,a { -webkit-tap-highlight-color:transparent; }
 .serif { font-family:Georgia,"Times New Roman",serif; }
 .shell { width:min(1180px,calc(100% - 2rem)); margin-inline:auto; }
 .paper-grid { background-image:linear-gradient(rgba(180,35,45,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(16,42,67,.04) 1px,transparent 1px); background-size:32px 32px; }
+.music-staff { background:repeating-linear-gradient(to bottom,transparent 0,transparent 18px,rgba(180,35,45,.18) 19px,transparent 20px); }
 .glass { background:rgba(255,255,255,.82); backdrop-filter:blur(18px); }
 .interactive-card { transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease; }
 .interactive-card:hover { border-color:#d8c9c9; box-shadow:var(--shadow-lg); transform:translateY(-2px); }
